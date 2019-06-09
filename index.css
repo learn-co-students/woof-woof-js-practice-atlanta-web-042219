@@ -37,6 +37,10 @@
   text-align: center;
 }
 
+#dog-summary-container img{
+  width: 20em;
+}
+
 #dog-info {
   display: flex;
   flex-flow: column;
