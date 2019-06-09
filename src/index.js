@@ -19,7 +19,7 @@ function getDogs() {
 function displayDog(dog) {
     document.getElementById("dog-bar").innerHTML += 
     `<span id="${dog.id}" class="dog_span" 
-        data-name="${dog.name}" 
+        data-name="${dog.name}"
         data-isgooddog="${dog.isGoodDog}" 
         data-image="${dog.image}">${dog.name}
     </span>`
@@ -29,7 +29,9 @@ function dogDetails(dog_span) {
     document.getElementById("dog-info").innerHTML = 
     `<img src=${dog_span.dataset.image}>
         <h2>${dog_span.dataset.name}</h2>
-    <button id="dogStatus_btn" data-dog-id="${dog_span.id}">${dog_span.dataset.isgooddog === "true" ? "Good Dog!" : "Bad Dog!"}</button>`
+    <button id="dogStatus_btn" data-dog-id="${dog_span.id}">
+        ${dog_span.dataset.isgooddog === "true" ? "Good Dog!" : "Bad Dog!"}
+    </button>`
 
 }
 
@@ -40,7 +42,7 @@ function dogStatus(button) {
 
     fetch(`http://localhost:3000/pups/${button.dataset.dogId}`,{
         method: "PATCH",
-        headers: { "Content-Type":"application/json" },
+        headers: {"Content-Type":"application/json"},
         body: JSON.stringify({isGoodDog: dog_span.dataset.isgooddog})
     })
 }
