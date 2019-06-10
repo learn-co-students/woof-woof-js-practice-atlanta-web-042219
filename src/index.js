@@ -1,71 +1,82 @@
 document.addEventListener('DOMContentLoaded', function(){
 
+	// VARIABLES
+	const DOGS_URL = 'http://localhost:3000/pups'
+	const dogbar_div = document.getElementById('dog-bar')
+	let dog_filter_on = false
+
+	// MAIN
 	document.addEventListener('click', handleClickEvents)
-	fetch_doggers()
+	fetch_dogs()
 
-	// ____________________ function definitions ____________________ //
-
+	//											//
+	// FUNCTION DEFINITIONS //
+	//											//
 	function handleClickEvents(e) {
-		if(e.target.className === 'dogger_span') show_dogger_info(e.target)
-		else if(e.target.id === 'isgooddog_btn') change_isgooddog_status(e.target)
-		else if(e.target.id === 'good-dog-filter') e.target.innerText.endsWith('OFF') ? show_good_doggers(e.target) : show_all_doggers(e.target)
+		if(e.target.className === 'dogspan') show_dog_info(e.target.dataset.dogId)
+		else if(e.target.id === 'dog_status_btn') change_dog_status(e.target)
+		else if(e.target.id === 'good-dog-filter') filter_dogs(e.target)
 	}
 
-	function fetch_doggers() {
-		return fetch('http://localhost:3000/pups')
-		.then(resp => resp.json())
-		.then(json => json.forEach(add_dogger_span))
-	}
+	function filter_dogs(button) {
+		dog_filter_on = !dog_filter_on
+		button.innerText = dog_filter_on ? 'Filter good dogs: ON' : 'Filter good dogs: OFF'
+		dogbar_div.innerHTML = ''
 
-	function add_dogger_span(dogger) {
-		document.getElementById('dog-bar').innerHTML += 
-		`<span id="${dogger.id}" class="dogger_span" data-name="${dogger.name}" data-isgooddog="${dogger.isGoodDog}" data-image="${dogger.image}">${dogger.name}</span>`
-	}
-
-	function show_dogger_info(dogger_span) {
-		document.getElementById('dog-summary-container').innerHTML = `
-			<img src=${dogger_span.dataset.image}>
-  		<h2>${dogger_span.dataset.name}</h2>
-  		<button id="isgooddog_btn" data-dogger-id="${dogger_span.id}">${dogger_span.dataset.isgooddog === 'true' ? 'Bad Dog!' : 'Good Dog!'}</button>`
-	}
-
-	function change_isgooddog_status(button) {
-		const dogger_span = document.getElementById(button.dataset.doggerId)
-		dogger_span.dataset.isgooddog = dogger_span.dataset.isgooddog === 'false'
-		button.innerText = button.innerText === 'Good Dog!' ? 'Bad Dog!' : 'Good Dog!'
-
-		fetch(`http://localhost:3000/pups/${button.dataset.doggerId}`,{
-			method: 'PATCH',
-			headers: { 'Content-Type':'application/json' },
-			body: JSON.stringify({isGoodDog: dogger_span.dataset.isgooddog})
-		})
-	}
-
-	function show_good_doggers(button) {
-		button.innerText = 'Filter good dogs: ON'
-		const all_doggers = document.getElementById('dog-bar').children
-		let good_doggers = []
-
-		for(let k=0; k<all_doggers.length; k++){
-			if(all_doggers[k].dataset.isgooddog === 'true') good_doggers.push(all_doggers[k])
-		}
-
-		document.getElementById('dog-bar').innerHTML = ''
-		good_doggers.forEach(dogger => {
-			add_dogger_span({
-				id: dogger.id,
-				name: dogger.dataset.name,
-				isGoodDog: dogger.dataset.isgooddog,
-				image: dogger.dataset.image
+		if(dog_filter_on) {
+			fetch(DOGS_URL)
+			.then(resp => resp.json())
+			.then(dogs => {
+				for(let k in dogs)
+					if(dogs[k].isGoodDog)
+						add_dogspan(dogs[k])
 			})
+		}
+		else
+			fetch_dogs()
+	}
+
+	function fetch_dogs() {
+		fetch(DOGS_URL)
+		.then(resp => resp.json())
+		.then(json => json.forEach(add_dogspan))
+	}
+
+	function add_dogspan(dog) {
+		dogbar_div.innerHTML += `<span class="dogspan" id=${dog.id} data-dog-id=${dog.id} data-is-good-dog=${dog.isGoodDog}>${dog.name}</span>`
+	}
+
+	function show_dog_info(id) {
+		fetch(DOGS_URL+'/'+id)
+		.then(resp => resp.json())
+		.then(dog => {
+			document.getElementById('dog-info').innerHTML = `
+				<img src=${dog.image}>
+				<h2>${dog.name}</h2>
+				<button id="dog_status_btn" data-dog-id=${dog.id} data-is-good-dog=${dog.isGoodDog}>${dog.isGoodDog ? 'Good Dog!' : 'Bad Dog!'}</button>`
 		})
 	}
 
-	function show_all_doggers(button) {
-		button.innerText = 'Filter good dogs: OFF'
-		document.getElementById('dog-bar').innerHTML = ''
-		fetch_doggers()
+	function change_dog_status(button) {
+		let temp_gds = button.dataset.isGoodDog === 'false'
+		button.dataset.isGoodDog = button.dataset.isGoodDog === 'false'
+		
+		fetch(DOGS_URL+'/'+button.dataset.dogId, {
+			method: 'PATCH',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ isGoodDog : temp_gds })
+		})
+		.then(button.innerText = temp_gds ? 'Good Dog!' : 'Bad Dog!')
+
+		// dumb fancy stuff
+		if(dog_filter_on && !temp_gds)
+			document.getElementById(button.dataset.dogId).remove()
+		else if(dog_filter_on && temp_gds) {
+			fetch(DOGS_URL+'/'+button.dataset.dogId)
+			.then(resp => resp.json())
+			.then(add_dogspan)
+		}
 	}
 
-	// END \\
+	// END //
 })
