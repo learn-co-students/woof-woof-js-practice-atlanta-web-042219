@@ -1,3 +1,5 @@
+let dogFilterOn = false
+
 document.addEventListener("DOMContentLoaded", () => {
     getDogs()
     document.addEventListener("click", handleClickEvents)
@@ -6,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function handleClickEvents(e) {
     if(e.target.className === "dog_span") dogDetails(e.target)
     else if(e.target.id === "dogStatus_btn") dogStatus(e.target)
+    else if (e.target.id === "good-dog-filter") goodDogFilter(e.target)
 }
 
 function getDogs() { 
@@ -45,4 +48,37 @@ function dogStatus(button) {
         headers: {"Content-Type":"application/json"},
         body: JSON.stringify({isGoodDog: dog_span.dataset.isgooddog})
     })
+}
+
+function goodDogFilter(button) {
+    if(dogFilterOn) {
+        // show all dogs
+        button.innerText = "Filter good dogs: OFF"
+        dogFilterOn = false
+        document.getElementById("dog-bar").innerHTML = ""
+        getDogs()
+    }
+    else {
+        // show good dogs only
+        let goodDogs = []
+        let allDogs = document.getElementById("dog-bar").children
+        for(let k=0; k<allDogs.length; k++)
+        {
+            if(allDogs[k].dataset.isgooddog === "true") 
+                goodDogs.push(allDogs[k]) 
+        }
+        document.getElementById("dog-bar").innerHTML = ""
+        goodDogs.forEach(dog => {
+            let dog_obj = {
+                id: dog.id,
+                name: dog.dataset.name,
+                isGoodDog: dog.dataset.isgooddog,
+                image: dog.dataset.image
+            }
+            displayDog(dog_obj)
+        })
+        button.innerText = "Filter good dogs: ON"
+        dogFilterOn = true
+    }
+
 }
